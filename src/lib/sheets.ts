@@ -15,15 +15,27 @@ export async function appendConsultationRow(payload: ConsultationPayload) {
 		GOOGLE_SHEETS_PROJECT_EMAIL,
 		GOOGLE_SHEETS_PRIVATE_KEY,
 		GOOGLE_SHEETS_SPREADSHEET_ID,
+		GOOGLE_SHEETS_WORKSHEET_NAME = "Sheet1",
 	} = process.env as Record<string, string | undefined>;
 
 	if (!GOOGLE_SHEETS_PROJECT_EMAIL || !GOOGLE_SHEETS_PRIVATE_KEY || !GOOGLE_SHEETS_SPREADSHEET_ID) {
 		throw new Error("Missing Google Sheets environment variables");
 	}
 
+	// Clean and format the private key
+	let privateKey = GOOGLE_SHEETS_PRIVATE_KEY || "";
+	
+	// Remove quotes if they exist
+	if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+		privateKey = privateKey.slice(1, -1);
+	}
+	
+	// Replace escaped newlines with actual newlines
+	privateKey = privateKey.replace(/\\n/g, '\n');
+
 	const auth = new google.auth.JWT({
 		email: GOOGLE_SHEETS_PROJECT_EMAIL,
-		key: (GOOGLE_SHEETS_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+		key: privateKey,
 		scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 	});
 	const sheets = google.sheets({ version: "v4", auth });
@@ -41,7 +53,7 @@ export async function appendConsultationRow(payload: ConsultationPayload) {
 	try {
 		await sheets.spreadsheets.values.append({
 			spreadsheetId: GOOGLE_SHEETS_SPREADSHEET_ID,
-			range: "A:G", // Use column range instead of specific worksheet
+			range: `${GOOGLE_SHEETS_WORKSHEET_NAME}!A:G`,
 			valueInputOption: "RAW",
 			requestBody: { values: [row] },
 		});
