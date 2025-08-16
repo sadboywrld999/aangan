@@ -17,13 +17,18 @@ export default function ConsultationPage() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(Object.fromEntries(formData.entries())),
 			});
-			if (!res.ok) throw new Error("Failed to submit");
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || "Failed to submit");
 			setStatus("success");
-			setMessage("Thanks! We’ll get back to you shortly.");
-			event.currentTarget.reset();
-		} catch (e) {
+			setMessage("Thank you! An expert from Team Aangan will reach out to you as soon as possible.");
+			// Safely reset the form
+			if (event.currentTarget) {
+				event.currentTarget.reset();
+			}
+		} catch (e: any) {
 			setStatus("error");
-			setMessage("Something went wrong. Please try again.");
+			setMessage(e.message || "Something went wrong. Please try again.");
+			console.error("Form submission error:", e);
 		}
 	}
 
@@ -42,10 +47,16 @@ export default function ConsultationPage() {
 						<input required name="email" type="email" className="mt-2 w-full rounded-md border border-sand bg-white px-4 py-3 text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent" placeholder="you@example.com" />
 					</label>
 				</div>
-				<label className="block">
-					<span className="block text-sm font-medium text-ink">Company Name</span>
-					<input name="company" type="text" className="mt-2 w-full rounded-md border border-sand bg-white px-4 py-3 text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Company or project" />
-				</label>
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+					<label className="block">
+						<span className="block text-sm font-medium text-ink">Company Name</span>
+						<input name="company" type="text" className="mt-2 w-full rounded-md border border-sand bg-white px-4 py-3 text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Company or project" />
+					</label>
+					<label className="block">
+						<span className="block text-sm font-medium text-ink">Phone Number</span>
+						<input name="phone" type="tel" className="mt-2 w-full rounded-md border border-sand bg-white px-4 py-3 text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent" placeholder="+91 98765 43210" />
+					</label>
+				</div>
 				<label className="block">
 					<span className="block text-sm font-medium text-ink">What are you looking for?</span>
 					<select name="lookingFor" className="mt-2 w-full rounded-md border border-sand bg-white px-4 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-accent">
@@ -65,7 +76,9 @@ export default function ConsultationPage() {
 					{status === "submitting" ? "Submitting…" : "Submit"}
 				</button>
 				{status && message && (
-					<p className={`text-sm ${status === "error" ? "text-red-600" : "text-accent"}`}>{message}</p>
+					<div className={`p-4 rounded-lg ${status === "error" ? "bg-red-50 border border-red-200" : "bg-green-50 border border-green-200"}`}>
+						<p className={`text-sm font-medium ${status === "error" ? "text-red-800" : "text-green-800"}`}>{message}</p>
+					</div>
 				)}
 			</form>
 		</main>
